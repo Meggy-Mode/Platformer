@@ -2,6 +2,8 @@ const canvas = document.getElementById('gameView');
 const ctx = canvas.getContext('2d');
 let colorOfCurrentBlock = null;
 let blockChanged = false;
+let currentLevel = 1;
+
 
 class Player {
   constructor(name, size, color) {
@@ -239,20 +241,40 @@ let levelStartTime = Date.now(); // Get the start time of the level
 
 function goToNextLevel() {
 
-  console.log("Level completed! Going to the next level...", "\nCompleated in: ", levelTime, " seconds");
+  /* 
+  Uncomment the line below to allow level progression 
+  But if it is uncommented the level compleated in "time" will always be 0 idk why its a bug
+  */
+  //currentLevel += 1;
+  loadBlocksForCurrentLevel();
+
+  console.log("Level completed! Going to the next level...", "\nCompleted in: ", levelTime, " seconds");
+
   // Reset player position for the next level
   player.x = 0;
   player.y = canvas.height / 2 - player.size / 2;
 
+  // Fetch and load blocks for the new level
 
-  // Set the timer to update every second
-  setInterval(() => {
-    levelTime = (Date.now() - levelStartTime) / 1000; // Calculate the elapsed time in seconds
-  }, 1000);
-  levelTime = 0
-  levelStartTime = Date.now(); // Get the start time of the level
-
+  console.log(`Now at level ${currentLevel}`);
 }
+
+function loadBlocksForCurrentLevel() {
+  fetch('blocks.json')
+    .then(response => response.json())
+    .then(data => {
+      const blocks = data.blocks;
+      if (!Array.isArray(blocks)) {
+        throw new Error('Expected blocks to be an array');
+      }
+
+      // Filter blocks for the new level
+      otherBlocks = blocks.filter(block => block.level === currentLevel);
+      loadBlockTextures(otherBlocks);
+    })
+    .catch(error => console.error('Error loading block data:', error));
+}
+
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -320,6 +342,7 @@ function update() {
   // Update cameraX based on player's horizontal position
   cameraX = player.x - canvas.width / 2 + player.size / 2;
   cameraX = Math.max(0, Math.min(cameraX, mapWidth - canvas.width));
+  
 }
 
 function gameLoop() {
@@ -367,17 +390,27 @@ document.addEventListener('keydown', (event) => {
 
 document.addEventListener('keyup', (event) => {
   keys[event.key.toLowerCase()] = false;
-});
+});// Global declarations
 
-
-// Load blocks and flags from JSON
 Promise.all([
-  fetch('blocks.json').then(response => response.json()),
+  fetch('blocks.json').then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  }),
   loadFlags()
 ])
-  .then(([blocksData]) => {
-    otherBlocks = blocksData.blocks;
+  .then(data => {
+    const blocks = data[0].blocks; // Accessing the blocks array from the first promise
+    if (!Array.isArray(blocks)) {
+      throw new Error('Expected blocks to be an array');
+    }
+
+    // Filter blocks based on the current level
+    otherBlocks = blocks.filter(block => block.level === currentLevel);
     loadBlockTextures(otherBlocks);
+    console.log(otherBlocks); // Verify the blocks being loaded
     gameLoop();
   })
   .catch(error => console.error('Error loading block data:', error));
