@@ -1,0 +1,14 @@
+*{
+  margin: 10px;
+  align-self: center;
+  align-items: center;
+  text-align: center;
+}
+body {
+  margin: 0; /* Remove default margin */
+  overflow: hidden; /* Prevent scrollbars */
+}
+canvas {
+  background: #f0f0f0; /* Optional: background color */
+  cursor: none; /* Hide the default cursor */
+}

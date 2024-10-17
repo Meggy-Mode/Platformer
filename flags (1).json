@@ -1,0 +1,14 @@
+{
+  "flags": [
+    {
+      "id": "flag1",
+      "color": "lightblue",
+      "position": {
+        "x": 800,
+        "y": 270
+      },
+      "size": 30,
+      "texture": ""
+    }
+  ]
+}
