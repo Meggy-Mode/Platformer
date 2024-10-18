@@ -3,7 +3,13 @@ const ctx = canvas.getContext('2d');
 let colorOfCurrentBlock = null;
 let blockChanged = false;
 let currentLevel = 1;
-
+let levelTime = 0; // Initialize the level timer
+let levelStartTime = Date.now(); // Get the start time of the level
+let levelLoaded = false;
+setTimeout(() => {
+  levelLoaded = true;
+  console.log("Loaded Level")
+}, 800);
 
 class Player {
   constructor(name, size, color) {
@@ -17,15 +23,15 @@ class Player {
     this.horizontalVelocity = 0;
     this.isGrounded = true;
   }
-
   draw() {
     ctx.fillStyle = this.color;
     ctx.fillRect(this.x - cameraX, this.y, this.size, this.size);
   }
 
+
   update(keys, blocks) {
     // Handle jumping
-    if (keys['w'] && this.isGrounded) {
+    if (keys['w'] && this.isGrounded && levelLoaded === true) {
       this.verticalVelocity = -8; // Initial jump velocity
       this.isGrounded = false; // Player is no longer grounded
       if (colorOfCurrentBlock === 'lime') {
@@ -35,9 +41,9 @@ class Player {
 
     // Set horizontal velocity based on input
     this.horizontalVelocity = 0; // Reset horizontal velocity
-    if (keys['a']) this.horizontalVelocity = -this.speed; // Move left
-    if (keys['d']) this.horizontalVelocity = this.speed; // Move right
-    if (keys[' ']) console.log(player.x, player.y)
+    if (keys['a'] && levelLoaded === true) this.horizontalVelocity = -this.speed; // Move left
+    if (keys['d'] && levelLoaded === true) this.horizontalVelocity = this.speed; // Move right
+    if (keys[' '] && levelLoaded === true) console.log(player.x, player.y)
     // Apply gravity if not grounded
     if (!this.isGrounded) {
       this.verticalVelocity += 0.5; // Gravity effect
@@ -73,18 +79,29 @@ class Player {
           this.y + this.size > belowBlockTop
         ) {
           collisionDetected = true;
+          console.log(block.color)
 
           // Prevent horizontal movement into the block
           if (this.horizontalVelocity > 0) {
             if (block.color === 'yellow') {
               this.verticalVelocity = 0;
               this.isGrounded = true;
+            } else if (block.color === 'darkgrey') {
+              player.x = 0;
+              player.y = 150;
+              this.horizontalVelocity = 0;
+              return;
             }
             this.x = block.position.x - this.size; // Stop at the left edge of the block
           } else if (this.horizontalVelocity < 0) {
             if (block.color === 'yellow') {
               this.verticalVelocity = 0;
               this.isGrounded = true;
+            } else if (block.color === 'darkgrey') {
+              player.x = 0;
+              player.y = 150;
+              this.horizontalVelocity = 0;
+              return;
             }
             this.x = block.position.x + block.width; // Stop at the right edge of the block
           }
@@ -97,12 +114,19 @@ class Player {
           this.y + this.size < aboveBlockBottom &&
           this.y + this.size + this.verticalVelocity >= belowBlockTop
         ) {
+          console.log(block.color)
+
           if (block.color === 'grey') {
             colorOfCurrentBlock = block.color;
             this.speed = 8;
             blockChanged = true;
           } else if (block.color === 'lime') {
             colorOfCurrentBlock = block.color;
+          } else if (colorOfCurrentBlock === 'darkgrey') {
+            player.x = 0;
+            player.y = 150;
+            this.horizontalVelocity = 0;
+            return;
           } else {
             colorOfCurrentBlock = block.color;
           }
@@ -221,9 +245,9 @@ function drawOtherBlocks() {
     const img = blockImages[block.id];
 
     // Check if the block has a texture
-    if (block.hasTexture && img.complete) {
+    if (block.hasTexture && img.complete && block.level === currentLevel) {
       ctx.drawImage(img, block.position.x - cameraX, block.position.y, block.width, block.height);
-    } else {
+    } else if(block.level === currentLevel) {
       // Use the backup color if there's no texture or the image is not loaded
       ctx.fillStyle = block.color;
       ctx.fillRect(block.position.x - cameraX, block.position.y, block.width, block.height);
@@ -236,28 +260,32 @@ function drawFlags() {
     flag.draw();
   });
 }
-let levelTime = 0; // Initialize the level timer
-let levelStartTime = Date.now(); // Get the start time of the level
+
 
 function goToNextLevel() {
+  if (currentLevel > 1) {
+    currentLevel = 1
+  } else {
+    currentLevel += 1;
+  }
+  levelLoaded = false;
 
-  /* 
-  Uncomment the line below to allow level progression 
-  But if it is uncommented the level compleated in "time" will always be 0 idk why its a bug
-  */
-  //currentLevel += 1;
+  setTimeout(() => {
+    levelLoaded = true;
+    console.log("Loaded Level")
+  }, 800);
+
   loadBlocksForCurrentLevel();
-
   console.log("Level completed! Going to the next level...", "\nCompleted in: ", levelTime, " seconds");
 
   // Reset player position for the next level
   player.x = 0;
   player.y = canvas.height / 2 - player.size / 2;
 
-  // Fetch and load blocks for the new level
-
   console.log(`Now at level ${currentLevel}`);
 }
+
+
 
 function loadBlocksForCurrentLevel() {
   fetch('blocks.json')
@@ -270,10 +298,11 @@ function loadBlocksForCurrentLevel() {
 
       // Filter blocks for the new level
       otherBlocks = blocks.filter(block => block.level === currentLevel);
-      loadBlockTextures(otherBlocks);
+      loadBlockTextures(otherBlocks); // Load the textures for the filtered blocks
     })
     .catch(error => console.error('Error loading block data:', error));
 }
+
 
 
 function draw() {
@@ -304,11 +333,14 @@ function drawCrosshair() {
 
 function loadBlockTextures(blocks) {
   blocks.forEach(block => {
-    const img = new Image();
-    img.src = block.texture;
-    blockImages[block.id] = img;
+    if (block.level === currentLevel) {
+      const img = new Image();
+      img.src = block.texture;
+      blockImages[block.id] = img;
+    }
   });
 }
+
 
 function loadFlags() {
   fetch('flags.json')
@@ -331,27 +363,31 @@ function loadFlags() {
 function update() {
   player.update(keys, otherBlocks);
   updateRedSquares();
+  levelTime = parseFloat((Date.now() - levelStartTime) / 1000); // Calculate the elapsed time in seconds
 
   // Check for collision with flags
   flags.forEach(flag => {
     if (flag.checkCollision(player)) {
       goToNextLevel(); // Call the level transition function
+      levelTime = 0
+      levelStartTime = Date.now(); // Reset the level start time
     }
   });
 
   // Update cameraX based on player's horizontal position
   cameraX = player.x - canvas.width / 2 + player.size / 2;
   cameraX = Math.max(0, Math.min(cameraX, mapWidth - canvas.width));
-  
+
 }
 
 function gameLoop() {
   update();
   draw();
 
-  if (Math.random() < 0.05) {
+  /*if (Math.random() < 0.05) {
     createRedSquare();
-  }
+  }*///I removed it because it doesn't serve a purpose
+
 
   requestAnimationFrame(gameLoop);
 }
