@@ -11,8 +11,38 @@
       "velocity": 1,
       "texture": "images/grass.png",
       "hasTexture": false,
-      "solid": true
+      "solid": true,
+      "level": 1
     },
+    {
+      "id": 2,
+      "type": "grass",
+      "width": 40,
+      "height": 40,
+      "color": "green",
+      "position": { "x": 100, "y": 250 },
+      "gravity": true,
+      "velocity": 1,
+      "texture": "images/grass.png",
+      "hasTexture": false,
+      "solid": true,
+      "level": 1
+    },
+    {
+      "id": 3,
+      "type": "grass",
+      "width": 40,
+      "height": 40,
+      "color": "green",
+      "position": { "x": 100, "y": 250 },
+      "gravity": true,
+      "velocity": 1,
+      "texture": "images/grass.png",
+      "hasTexture": false,
+      "solid": true,
+      "level": 1
+    },
+
     {
       "id": 2,
       "type": "sticky",
@@ -24,11 +54,12 @@
       "velocity": 1,
       "texture": "images/grass.png",
       "hasTexture": false,
-      "solid": true
+      "solid": true,
+      "level": 1
     },
     {
       "id": 3,
-      "type": "grass",
+      "type": "bouncy",
       "width": 40,
       "height": 40,
       "color": "lime",
@@ -37,7 +68,8 @@
       "velocity": 1,
       "texture": "images/grass.png",
       "hasTexture": false,
-      "solid": true
+      "solid": true,
+      "level": 1
     },
     {
       "id": 4,
@@ -50,7 +82,8 @@
       "velocity": 1,
       "texture": "images/grass.png",
       "hasTexture": false,
-      "solid": true
+      "solid": true,
+      "level": 1
     },
     {
       "id": 5,
@@ -63,7 +96,8 @@
       "velocity": 1,
       "texture": "images/Stone.png",
       "hasTexture": false,
-      "solid": true
+      "solid": true,
+      "level": 1
     }
   ]
 }
