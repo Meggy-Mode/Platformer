@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canvas Drawing</title>
+  <style>
+    #levelCanvas {
+      border: 1px solid black;
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="levelCanvas" width="400" height="300"></canvas>
+  <button id="exportButton">Export Level Data</button>
+
+  <script>
+    const canvas = document.getElementById('levelCanvas');
+    const ctx = canvas.getContext('2d');
+    const exportButton = document.getElementById('exportButton');
+
+    // Level data to store the blocks
+    const levelData = [];
+
+    // Current drawing state
+    let isDrawing = false;
+    let startX = 0;
+    let startY = 0;
+    let currentBlock = null;
+
+    // Predefined block types and properties
+    const blockTypes = [
+      {id: 1, type: 'grass', color: 'green', texture: 'images/grass.png'},
+      {id: 2, type: 'sticky', color: 'yellow', texture: 'images/grass.png'},
+      {id: 3, type: 'bouncy', color: 'lime', texture: 'images/grass.png'},
+      {id: 5, type: 'stone', color: 'grey', texture: 'images/Stone.png'}
+    ];
+
+    // Default selected block type is 'grass' (index 1)
+    let currentBlockTypeIndex = 1;
+
+    // Mouse events for drawing blocks (only on left-click)
+    // Mouse events for drawing blocks
+    canvas.addEventListener('mousedown', (event) => {
+      if (event.button !== 0) return; // Only allow drawing with left-click (button 0)
+
+      isDrawing = true;
+      startX = snapToGrid(event.offsetX);  // Snap to grid
+      startY = snapToGrid(event.offsetY);  // Snap to grid
+
+      // Initialize a block from the selected block type
+      const selectedType = blockTypes[currentBlockTypeIndex];
+      currentBlock = {
+        id: selectedType.id,
+        type: selectedType.type,
+        width: 0,
+        height: 0,
+        color: selectedType.color,
+        position: {x: startX, y: startY},
+        gravity: true,  // This could be a toggleable feature
+        velocity: 1,    // Default value
+        texture: selectedType.texture || "images/grass.png",  // Default texture
+        hasTexture: false,  // Assuming you may toggle this later
+        solid: true,        // Default solid property
+        level: 1            // Assuming the level is always 1
+      };
+    });
+
+    canvas.addEventListener('mousemove', (event) => {
+      if (!isDrawing || event.button !== 0) return; // Only allow drawing with left-click (button 0)
+
+      // Snap the current mouse position to the grid
+      const currentX = snapToGrid(event.offsetX);  // Snap to grid
+      const currentY = snapToGrid(event.offsetY);  // Snap to grid
+
+      // Calculate the width and height as positive values
+      currentBlock.width = Math.abs(currentX - startX);
+      currentBlock.height = Math.abs(currentY - startY);
+
+      // Update the position to the minimum of the start position and current position to avoid negative values
+      currentBlock.position.x = Math.min(currentX, startX);
+      currentBlock.position.y = Math.min(currentY, startY);
+
+      // Redraw the canvas
+      redrawCanvas();
+
+      // Draw the current block
+      drawBlock(currentBlock);
+    });
+
+    canvas.addEventListener('mouseup', (event) => {
+      if (event.button !== 0) return; // Only allow finalizing block placement with left-click (button 0)
+
+      if (isDrawing) {
+        isDrawing = false;
+        levelData.push(currentBlock);  // Add the block to level data
+        currentBlock = null;
+      }
+    });
+
+
+    // Right-click event to erase blocks
+    canvas.addEventListener('contextmenu', (event) => {
+      event.preventDefault();  // Prevent the default context menu from appearing
+      if (event.button === 2) { // Right-click (button 2) eraser
+        removeBlockAt(event.offsetX, event.offsetY);  // Call the remove function
+      }
+    });
+    // Snap-to-grid size
+    const gridSize = 10;
+
+    // Function to snap the coordinates to the grid
+    function snapToGrid(value) {
+      return Math.round(value / gridSize) * gridSize;
+    }
+
+    // Function to redraw the canvas
+    function redrawCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before redrawing
+      levelData.forEach(drawBlock); // Redraw all saved blocks
+    }
+
+    // Function to draw a block
+    function drawBlock(block) {
+      ctx.fillStyle = block.color;
+      ctx.fillRect(block.position.x, block.position.y, block.width, block.height);
+    }
+    // Function to remove blocks at a specific position
+    function removeBlockAt(x, y) {
+      // Snap the coordinates to the grid for accurate positioning
+      x = snapToGrid(x);
+      y = snapToGrid(y);
+
+      // Find the block that contains the clicked position
+      const index = levelData.findIndex(block =>
+        x >= block.position.x && x <= block.position.x + block.width &&
+        y >= block.position.y && y <= block.position.y + block.height
+      );
+
+      // Remove the block if found
+      if (index !== -1) {
+        levelData.splice(index, 1);  // Remove block from levelData array
+      }
+
+      // Redraw the canvas
+      redrawCanvas();
+    }
+
+    // Right-click event to erase blocks
+    canvas.addEventListener('contextmenu', (event) => {
+      event.preventDefault();  // Prevent the default context menu from appearing
+      removeBlockAt(event.offsetX, event.offsetY);  // Call the remove function
+    });
+
+
+    // Handle keydown events to switch block types
+    window.addEventListener('keydown', (event) => {
+      const keyMap = {
+        '1': 0,
+        '2': 1,
+        '3': 2,
+        '4': 3
+      };
+
+      if (keyMap.hasOwnProperty(event.key)) {
+        currentBlockTypeIndex = keyMap[event.key];
+        console.log(`Switched to block type: ${blockTypes[currentBlockTypeIndex].type}`);
+      }
+    });
+
+    // Export level data as JSON
+    exportButton.addEventListener('click', () => {
+        // Format the data with proper block attributes (including position, size, etc.)
+        const formattedLevelData = levelData.map(block => ({
+            id: block.id,
+            type: block.type,
+            width: block.width,
+            height: block.height,
+            color: block.color,
+            position: block.position,
+            gravity: block.gravity,
+            velocity: block.velocity,
+            texture: block.texture,
+            hasTexture: block.hasTexture,
+            solid: block.solid,
+            level: block.level
+        }));
+
+        // Convert the formatted level data to JSON
+        const json = JSON.stringify({ blocks: formattedLevelData }, null, 2);
+
+        // Create a blob and download the JSON file
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'level.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+
+  </script>
+</body>
+
+</html>
