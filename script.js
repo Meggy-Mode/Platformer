@@ -6,6 +6,8 @@ let currentLevel = 1;
 let levelTime = 0; // Initialize the level timer
 let levelStartTime = Date.now(); // Get the start time of the level
 let levelLoaded = false;
+let maxLevel = 3; //Total levels -1
+let levelFile = "blocks.json";
 setTimeout(() => {
   levelLoaded = true;
   console.log("Loaded Level")
@@ -232,6 +234,48 @@ function drawOtherBlocks() {
   });
 }
 
+
+function changeFile() {
+  const fileInput = document.getElementById("fileInput");
+  const file = fileInput.files[0]; // Access the selected file
+
+  if (file) {
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+      try {
+        const jsonData = JSON.parse(event.target.result); // Parse JSON content
+        const blocks = jsonData.blocks; // Assume the structure has a "blocks" property
+
+        if (Array.isArray(blocks)) {
+          // Update levelFile and otherBlocks for the current level
+          levelFile = file.name;
+          console.log("Changed file to " + levelFile);
+
+          // Filter blocks for the current level
+          otherBlocks = blocks.filter(block => block.level === currentLevel);
+          loadBlockTextures(otherBlocks); // Load textures for the blocks
+          maxLevel = 0
+
+          console.log("Blocks successfully updated for the current level.");
+        } else {
+          throw new Error("Invalid JSON format: 'blocks' must be an array.");
+        }
+      } catch (error) {
+        console.error("Error parsing JSON data:", error);
+      }
+    };
+
+    reader.onerror = function() {
+      console.error("Error reading the file.");
+    };
+
+    reader.readAsText(file); // Read the file as text
+  } else {
+    console.log("No file selected.");
+  }
+}
+
 function drawFlags() {
   flags.forEach(flag => {
     flag.draw();
@@ -239,7 +283,7 @@ function drawFlags() {
 }
 
 function goToNextLevel() {
-  if (currentLevel > 2) {
+  if (currentLevel > maxLevel) {
     currentLevel = 1;
   } else {
     currentLevel += 1;
@@ -262,7 +306,7 @@ function goToNextLevel() {
 }
 
 function loadBlocksForCurrentLevel() {
-  fetch('blocks.json')
+  fetch(levelFile)
     .then(response => response.json())
     .then(data => {
       const blocks = data.blocks;
@@ -398,7 +442,7 @@ document.addEventListener('keyup', (event) => {
 
 // Global declarations
 Promise.all([
-  fetch('blocks.json').then(response => {
+  fetch(levelFile).then(response => {
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
