@@ -13,12 +13,14 @@ setTimeout(() => {
   console.log("Loaded Level")
 }, 800);
 
+
 class Player {
-  constructor(name, size, color) {
+  constructor(name, size, color, padding) {
     this.speed = 5;
     this.name = name;
     this.size = size;
     this.color = color;
+    this.padding = padding
     this.x = 0;
     this.y = canvas.height / 2 - size / 2;
     this.verticalVelocity = 0;
@@ -207,9 +209,68 @@ class Flag {
   }
 }
 
+class Shadow {
+  constructor(name, size, color, padding) {
+    this.name = name;
+    this.size = size;
+    this.color = color;
+    this.x = 0;
+    this.y = 0;
+    this.padding = padding
+  }
+
+  draw() {
+    ctx.fillStyle = this.color;
+    ctx.fillRect(this.x - cameraX, this.y, this.size, (this.size + 5));
+  }
+
+  followPlayer(px, blocks) {
+    this.x = px + (15 - this.padding); // Always match player's X position
+    let groundY = 300; // Track the lowest possible ground
+    
+    blocks.forEach((block) => {
+      if (block.solid) {
+        const blockTop = block.position.y;
+        const blockLeft = block.position.x - this.size;
+        const blockRight = block.position.x + block.width;
+
+        // Check if the shadow is above this block
+        if (this.x >= blockLeft && this.x <= blockRight) {
+          if (blockTop < groundY) {
+            groundY = blockTop; // Update ground position
+          }
+        }
+      }
+    });
+
+    // Place shadow on the detected ground level
+    if (groundY !== Infinity) {
+      this.y = groundY - this.size;
+    }
+  }
+}
+
+
+
 let keys = {};
-const player = new Player("Hero", 15, 'blue');
-let crosshair = { x: 0, y: 0 };
+const player = new Player("P1", 15, 'blue', );
+const shadow = new Shadow("P1 Shadow", 1, 'grey', 1)
+const shadow2 = new Shadow("P1 Shadow", 1, 'grey', 2)
+const shadow3 = new Shadow("P1 Shadow", 1, 'grey', 3)
+const shadow4 = new Shadow("P1 Shadow", 1, 'grey', 4)
+const shadow5 = new Shadow("P1 Shadow", 1, 'grey', 5)
+const shadow6 = new Shadow("P1 Shadow", 1, 'grey', 6)
+const shadow7 = new Shadow("P1 Shadow", 1, 'grey', 7)
+const shadow8 = new Shadow("P1 Shadow", 1, 'grey', 8)
+const shadow9 = new Shadow("P1 Shadow", 1, 'grey', 9)
+const shadow10 = new Shadow("P1 Shadow", 1, 'grey', 10)
+const shadow11 = new Shadow("P1 Shadow", 1, 'grey', 11)
+const shadow12 = new Shadow("P1 Shadow", 1, 'grey', 12)
+const shadow13 = new Shadow("P1 Shadow", 1, 'grey', 13)
+const shadow14 = new Shadow("P1 Shadow", 1, 'grey', 14)
+const shadow15 = new Shadow("P1 Shadow", 1, 'grey', 15)
+
+
 let otherBlocks = [];
 let flags = [];
 const blockImages = [];
@@ -326,27 +387,40 @@ const updateInterval = 15; // Update every 10 milliseconds
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  shadow.followPlayer(player.x, otherBlocks)
+  shadow2.followPlayer(player.x, otherBlocks)
+  shadow3.followPlayer(player.x, otherBlocks)
+  shadow4.followPlayer(player.x, otherBlocks)
+  shadow5.followPlayer(player.x, otherBlocks)
+  shadow6.followPlayer(player.x, otherBlocks)
+  shadow7.followPlayer(player.x, otherBlocks)
+  shadow8.followPlayer(player.x, otherBlocks)
+  shadow9.followPlayer(player.x, otherBlocks)
+  shadow10.followPlayer(player.x, otherBlocks)
+  shadow11.followPlayer(player.x, otherBlocks)
+  shadow12.followPlayer(player.x, otherBlocks)
+  shadow13.followPlayer(player.x, otherBlocks)
+  shadow14.followPlayer(player.x, otherBlocks)
+  shadow15.followPlayer(player.x, otherBlocks)
+
+  shadow.draw();
+  shadow2.draw();
+  shadow3.draw();
+  shadow4.draw();
+  shadow5.draw();
+  shadow6.draw();
+  shadow7.draw();
+  shadow8.draw();
+  shadow9.draw();
+  shadow10.draw();
+  shadow11.draw();
+  shadow12.draw();
+  shadow13.draw();
+  shadow14.draw();
+  shadow15.draw();
   player.draw();
   drawOtherBlocks();
   drawFlags(); // Draw flags here
-  drawCrosshair();
-}
-
-function drawCrosshair() {
-  ctx.strokeStyle = 'red';
-  ctx.lineWidth = 2;
-
-  // Draw horizontal line
-  ctx.beginPath();
-  ctx.moveTo(crosshair.x - 10, crosshair.y);
-  ctx.lineTo(crosshair.x + 10, crosshair.y);
-  ctx.stroke();
-
-  // Draw vertical line
-  ctx.beginPath();
-  ctx.moveTo(crosshair.x, crosshair.y - 10);
-  ctx.lineTo(crosshair.x, crosshair.y + 10);
-  ctx.stroke();
 }
 
 function loadBlockTextures(blocks) {
@@ -403,7 +477,6 @@ function update() {
 function gameLoop() {
   update();
   draw();
-
   requestAnimationFrame(gameLoop);
 }
 
@@ -424,12 +497,6 @@ canvas.addEventListener('click', (event) => {
 
 canvas.addEventListener('contextmenu', (event) => {
   event.preventDefault();
-});
-
-canvas.addEventListener('mousemove', (event) => {
-  const rect = canvas.getBoundingClientRect();
-  crosshair.x = event.clientX - rect.left;
-  crosshair.y = event.clientY - rect.top;
 });
 
 document.addEventListener('keydown', (event) => {
