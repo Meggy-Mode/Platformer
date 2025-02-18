@@ -2,6 +2,6 @@ A nice and "easy" platform game.
 
 :)
 
-to play visit this link [https://meggy-mode.github.io/Platformer/]
+Play <a href="https://meggy-mode.github.io/Platformer">Game</a>
 
 Updated 12/9/2024
