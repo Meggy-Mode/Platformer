@@ -3,11 +3,12 @@ const ctx = canvas.getContext('2d');
 let colorOfCurrentBlock = null;
 let blockChanged = false;
 let currentLevel = 1;
+let levelStartTime = 0
 let levelTime = 0; // Initialize the level timer
-let levelStartTime = Date.now(); // Get the start time of the level
 let levelLoaded = false;
 let maxLevel = 3; //Total levels -1
 let levelFile = "blocks.json";
+let playerStarted = false
 setTimeout(() => {
   levelLoaded = true;
   console.log("Loaded Level")
@@ -35,6 +36,10 @@ class Player {
   update(keys, blocks) {
     // Handle jumping
     if (keys['w'] && this.isGrounded && levelLoaded === true) {
+      if (playerStarted == false) {
+        levelStartTime = Date.now();
+      }
+      playerStarted = true
       this.verticalVelocity = -8; // Initial jump velocity
       this.isGrounded = false; // Player is no longer grounded
       if (colorOfCurrentBlock === 'lime') {
@@ -44,9 +49,28 @@ class Player {
 
     // Set horizontal velocity based on input
     this.horizontalVelocity = 0; // Reset horizontal velocity
-    if (keys['a'] && levelLoaded === true) this.horizontalVelocity = -this.speed; // Move left
-    if (keys['d'] && levelLoaded === true) this.horizontalVelocity = this.speed; // Move right
-    if (keys[' '] && levelLoaded === true) console.log(player.x, player.y);
+    if (keys['a'] && levelLoaded === true) {
+      if (playerStarted == false) {
+        levelStartTime = Date.now();
+      }
+      this.horizontalVelocity = -this.speed;
+      playerStarted = true
+    }
+    if (keys['d'] && levelLoaded === true) {
+      if (playerStarted == false) {
+        levelStartTime = Date.now();
+      }
+      this.horizontalVelocity = this.speed;
+      playerStarted = true
+
+    } // Move right
+    if (keys[' '] && levelLoaded === true) {
+      if (playerStarted == false) {
+        levelStartTime = Date.now();
+      }
+      console.log(player.x, player.y);
+      playerStarted = true
+    }
 
     // Apply gravity if not grounded
     if (!this.isGrounded) {
@@ -227,7 +251,7 @@ class Shadow {
   followPlayer(px, blocks) {
     this.x = px + (15 - this.padding); // Always match player's X position
     let groundY = 300; // Track the lowest possible ground
-    
+
     blocks.forEach((block) => {
       if (block.solid) {
         const blockTop = block.position.y;
@@ -253,7 +277,7 @@ class Shadow {
 
 
 let keys = {};
-const player = new Player("P1", 15, 'blue', );
+const player = new Player("P1", 15, 'blue',);
 const shadow = new Shadow("P1 Shadow", 1, 'grey', 1)
 const shadow2 = new Shadow("P1 Shadow", 1, 'grey', 2)
 const shadow3 = new Shadow("P1 Shadow", 1, 'grey', 3)
@@ -451,15 +475,20 @@ function loadFlags() {
     .catch(error => console.error('Error loading flag data:', error));
 }
 
+
 function update() {
   const currentTime = Date.now();
   if (currentTime - lastUpdateTime >= updateInterval) {
     player.update(keys, otherBlocks);
-    levelTime = parseFloat((Date.now() - levelStartTime) / 1000); // Calculate the elapsed time in seconds
-
+    if (playerStarted == true) {
+      levelTime = parseFloat((Date.now() - levelStartTime) / 1000); // Calculate the elapsed time in seconds
+    }
     // Check for collision with flags
     flags.forEach(flag => {
       if (flag.checkCollision(player)) {
+        playerStarted == false
+        document.getElementById("compleated-level").innerText = currentLevel;
+        document.getElementById("time-stamp").innerText = levelTime;
         goToNextLevel(); // Call the level transition function
         levelTime = 0;
         levelStartTime = Date.now(); // Reset the level start time
@@ -475,6 +504,7 @@ function update() {
 }
 
 function gameLoop() {
+  document.getElementById('time').innerText = levelTime
   update();
   draw();
   requestAnimationFrame(gameLoop);
