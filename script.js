@@ -33,160 +33,109 @@ class Player {
     ctx.fillStyle = this.color;
     ctx.fillRect(this.x - cameraX, this.y, this.size, this.size);
   }
-  update(keys, blocks) {
-    // Handle jumping
-    if (keys['w'] && this.isGrounded && levelLoaded === true) {
-      if (playerStarted == false) {
-        levelStartTime = Date.now();
-      }
-      playerStarted = true
-      this.verticalVelocity = -8; // Initial jump velocity
-      this.isGrounded = false; // Player is no longer grounded
-      if (colorOfCurrentBlock === 'lime') {
-        this.verticalVelocity = -10; // Increased jump on lime block
-      }
-    }
+update(keys, blocks) {
+    if (levelLoaded) {
+        if ((keys['w'] || keys['a'] || keys['d'] || keys[' ']) && !playerStarted) {
+            levelStartTime = Date.now();
+            playerStarted = true;
+        }
 
-    // Set horizontal velocity based on input
-    this.horizontalVelocity = 0; // Reset horizontal velocity
-    if (keys['a'] && levelLoaded === true) {
-      if (playerStarted == false) {
-        levelStartTime = Date.now();
-      }
-      this.horizontalVelocity = -this.speed;
-      playerStarted = true
+        if (keys['w'] && this.isGrounded) {
+            this.verticalVelocity = colorOfCurrentBlock === 'lime' ? -10 : -8;
+            this.isGrounded = false;
+        }
+        
+        this.horizontalVelocity = (keys['a'] ? -this.speed : 0) + (keys['d'] ? this.speed : 0);
     }
-    if (keys['d'] && levelLoaded === true) {
-      if (playerStarted == false) {
-        levelStartTime = Date.now();
-      }
-      this.horizontalVelocity = this.speed;
-      playerStarted = true
-
-    } // Move right
-    if (keys[' '] && levelLoaded === true) {
-      if (playerStarted == false) {
-        levelStartTime = Date.now();
-      }
-      console.log(player.x, player.y);
-      playerStarted = true
-    }
-
-    // Apply gravity if not grounded
+    
     if (!this.isGrounded) {
-      this.verticalVelocity += 0.5; // Gravity effect
+        this.verticalVelocity += 0.5;
     }
-
-    // Update vertical position
+    
     this.y += this.verticalVelocity;
-
-    // Check collision with ground
     if (this.y + this.size >= canvas.height) {
-      this.y = canvas.height - this.size; // Snap to ground
-      this.verticalVelocity = 0; // Stop falling
-      this.isGrounded = true; // Player is grounded
+        this.y = canvas.height - this.size;
+        this.verticalVelocity = 0;
+        this.isGrounded = true;
     }
 
-    // Store the intended horizontal position
     let intendedX = this.x + this.horizontalVelocity;
-
-    // Check collision with solid blocks
-    let collisionDetected = false;
-    let onBlock = false;
+    let collisionDetected = false, onBlock = false;
 
     blocks.forEach(block => {
-      if (block.solid) {
+        if (!block.solid) return;
+        
         const belowBlockTop = block.position.y;
         const aboveBlockBottom = block.position.y + block.height;
 
-        // Check for horizontal collision
         if (
-          intendedX < block.position.x + block.width &&
-          intendedX + this.size > block.position.x &&
-          this.y < aboveBlockBottom &&
-          this.y + this.size > belowBlockTop
+            intendedX < block.position.x + block.width &&
+            intendedX + this.size > block.position.x &&
+            this.y < aboveBlockBottom &&
+            this.y + this.size > belowBlockTop
         ) {
-          collisionDetected = true;
-
-          // Prevent horizontal movement into the block
-          if (this.horizontalVelocity > 0) {
-            if (block.color === 'yellow') {
-              this.verticalVelocity = 0.5;
-              this.isGrounded = true;
-            } else if (block.color === 'black') {
-              this.resetPlayer();
-              intendedX = 0;
-              return;
+            collisionDetected = true;
+            
+            if (block.color === 'black') {
+                this.resetPlayer();
+                return;
             }
-            this.x = block.position.x - this.size; // Stop at the left edge of the block
-          } else if (this.horizontalVelocity < 0) {
+            
             if (block.color === 'yellow') {
-              this.verticalVelocity = 0.5;
-              this.isGrounded = true;
-            } else if (block.color === 'black') {
-              this.resetPlayer();
-              intendedX = 0;
-              return;
+                this.verticalVelocity = 0.5;
+                this.isGrounded = true;
             }
-            this.x = block.position.x + block.width; // Stop at the right edge of the block
-          }
+            
+            this.x = this.horizontalVelocity > 0 
+                ? block.position.x - this.size 
+                : block.position.x + block.width;
         }
-
-        // Check for vertical collision (top of the block)
+        
         if (
-          this.x < block.position.x + block.width &&
-          this.x + this.size > block.position.x &&
-          this.y + this.size < aboveBlockBottom &&
-          this.y + this.size + this.verticalVelocity >= belowBlockTop
+            this.x < block.position.x + block.width &&
+            this.x + this.size > block.position.x &&
+            this.y + this.size < aboveBlockBottom &&
+            this.y + this.size + this.verticalVelocity >= belowBlockTop
         ) {
-          if (block.color === 'grey') {
-            colorOfCurrentBlock = block.color;
-            this.speed = 8;
-            blockChanged = true;
-          } else if (block.color === 'lime') {
-            colorOfCurrentBlock = block.color;
-          } else if (block.color === 'black') {
-            this.resetPlayer();
-            intendedX = 0;
-            return;
-          } else {
-            colorOfCurrentBlock = block.color;
-          }
-
-          // Position the player above the block
-          this.y = belowBlockTop - this.size;
-          this.verticalVelocity = 0; // Stop falling
-          this.isGrounded = true; // Player is now grounded
-          onBlock = true; // Player is on a block
+            if (['grey', 'lime', 'black'].includes(block.color)) {
+                colorOfCurrentBlock = block.color;
+                if (block.color === 'grey') {
+                    this.speed = 8;
+                    blockChanged = true;
+                }
+                if (block.color === 'black') {
+                    this.resetPlayer();
+                    return;
+                }
+            }
+            
+            this.y = belowBlockTop - this.size;
+            this.verticalVelocity = 0;
+            this.isGrounded = true;
+            onBlock = true;
         }
-      }
     });
 
-    // If no collision detected, check if off the block
     if (!collisionDetected && !onBlock) {
-      this.isGrounded = false; // Player is not on the ground
-      if (colorOfCurrentBlock === 'grey' && blockChanged === true) {
-        blockChanged = false;
-        setTimeout(() => {
-          this.speed = 5; // Reset speed after a delay
-        }, 2000);
-      } else if (colorOfCurrentBlock === 'lime' && blockChanged === true) {
-        blockChanged = false;
-        setTimeout(() => {
-          this.verticalVelocity = 5;
-          this.isGrounded = true;
-        }, 20);
-      }
+        this.isGrounded = false;
+        if (blockChanged) {
+            blockChanged = false;
+            setTimeout(() => {
+                if (colorOfCurrentBlock === 'grey') this.speed = 5;
+                if (colorOfCurrentBlock === 'lime') {
+                    this.verticalVelocity = 5;
+                    this.isGrounded = true;
+                }
+            }, colorOfCurrentBlock === 'grey' ? 2000 : 20);
+        }
     }
-
-    // Update horizontal position if no collision detected
+    
     if (!collisionDetected) {
-      this.x = intendedX;
+        this.x = intendedX;
     }
-
-    // Clamp player position to map boundaries
+    
     this.x = Math.max(0, Math.min(this.x, mapWidth - this.size));
-  }
+}
 
   resetPlayer() {
     this.x = 0;
