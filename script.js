@@ -232,14 +232,7 @@ class Shadow {
     // Always place shadow on the detected ground level (or canvas bottom if no block found)
     this.y = groundY - this.size;
 }
-
-    // Place shadow on the detected ground level
-    if (groundY !== canvas.height) { // Fixed: was checking against Infinity
-      this.y = groundY - this.size;
-    }
-  }
 }
-
 
 
 let keys = {};
