@@ -123,7 +123,6 @@ update(keys, blocks) {
             this.x = this.horizontalVelocity > 0 
                 ? block.position.x - this.size 
                 : block.position.x + block.width;
-            intendedX = this.x; // Update intended position after collision
         }
         
         // Floor collision check (landing on top of blocks)
