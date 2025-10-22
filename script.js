@@ -408,7 +408,7 @@ function loadBlockTextures(blocks) {
 }
 
 function loadFlags() {
-  fetch('flags.json')
+  return fetch('flags.json')
     .then(response => response.json())
     .then(data => {
       data.flags.forEach(flagData => {
