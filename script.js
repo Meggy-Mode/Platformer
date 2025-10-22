@@ -130,8 +130,7 @@ update(keys, blocks) {
             this.x < block.position.x + block.width &&
             this.x + this.size > block.position.x &&
             this.y + this.size <= belowBlockTop + Math.abs(this.verticalVelocity) + 1 &&
-            this.y + this.size >= belowBlockTop &&
-            this.verticalVelocity >= 0 // Moving downward or stationary
+            this.y + this.size >= belowBlockTop 
         ) {
             if (['grey', 'lime', 'black'].includes(block.color)) {
                 
