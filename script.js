@@ -56,7 +56,36 @@ update(keys, blocks) {
         this.verticalVelocity += 0.5;
     }
     
+    // Apply vertical movement first and check for ceiling/floor collisions
     this.y += this.verticalVelocity;
+    
+    // Check for ceiling collisions (hitting bottom of blocks)
+    blocks.forEach(block => {
+        if (!block.solid) return;
+        
+        const blockBottom = block.position.y + block.height;
+        const blockTop = block.position.y;
+        
+        // Check if player is hitting the ceiling (bottom of a block)
+        if (
+            this.x < block.position.x + block.width &&
+            this.x + this.size > block.position.x &&
+            this.y < blockBottom &&
+            this.y + this.size > blockTop &&
+            this.verticalVelocity < 0 // Moving upward
+        ) {
+            // Hit ceiling
+            this.y = blockBottom;
+            this.verticalVelocity = 0;
+            
+            if (block.color === 'black') {
+                this.resetPlayer();
+                return;
+            }
+        }
+    });
+    
+    // Check for floor collisions
     if (this.y + this.size >= canvas.height) {
         this.y = canvas.height - this.size;
         this.verticalVelocity = 0;
@@ -72,6 +101,7 @@ update(keys, blocks) {
         const belowBlockTop = block.position.y;
         const aboveBlockBottom = block.position.y + block.height;
 
+        // Horizontal collision check (walls)
         if (
             intendedX < block.position.x + block.width &&
             intendedX + this.size > block.position.x &&
@@ -93,13 +123,16 @@ update(keys, blocks) {
             this.x = this.horizontalVelocity > 0 
                 ? block.position.x - this.size 
                 : block.position.x + block.width;
+            intendedX = this.x; // Update intended position after collision
         }
         
+        // Floor collision check (landing on top of blocks)
         if (
             this.x < block.position.x + block.width &&
             this.x + this.size > block.position.x &&
-            this.y + this.size < aboveBlockBottom &&
-            this.y + this.size + this.verticalVelocity >= belowBlockTop
+            this.y + this.size <= belowBlockTop + Math.abs(this.verticalVelocity) + 1 &&
+            this.y + this.size >= belowBlockTop &&
+            this.verticalVelocity >= 0 // Moving downward or stationary
         ) {
             if (['grey', 'lime', 'black'].includes(block.color)) {
                 const previousColor = colorOfCurrentBlock;
@@ -126,7 +159,7 @@ update(keys, blocks) {
         this.isGrounded = false;
         if (blockChanged) {
             blockChanged = false;
-            const currentBlockColor = colorOfCurrentBlock; // Capture current value
+            const currentBlockColor = colorOfCurrentBlock;
             const timeoutId = setTimeout(() => {
                 if (currentBlockColor === 'grey') this.speed = 5;
                 if (currentBlockColor === 'lime') {
