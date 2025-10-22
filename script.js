@@ -15,6 +15,7 @@ setTimeout(() => {
 }, 800);
 
 
+
 class Player {
   constructor(name, size, color, padding) {
     this.speed = 5;
