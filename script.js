@@ -8,7 +8,8 @@ let levelTime = 0; // Initialize the level timer
 let levelLoaded = false;
 let maxLevel = 3; //Total levels -1
 let levelFile = "blocks.json";
-let playerStarted = false
+let playerStarted = false;
+let levelTransitioning = false; // Added to prevent multiple level transitions
 setTimeout(() => {
   levelLoaded = true;
   console.log("Loaded Level")
@@ -28,12 +29,14 @@ class Player {
     this.verticalVelocity = 0;
     this.horizontalVelocity = 0;
     this.isGrounded = true;
+    this.activeTimeouts = []; // Track active timeouts
   }
 
   draw() {
     ctx.fillStyle = this.color;
     ctx.fillRect(this.x - cameraX, this.y, this.size, this.size);
   }
+  
 update(keys, blocks) {
     if (levelLoaded) {
         if ((keys['w'] || keys['a'] || keys['d'] || keys[' ']) && !playerStarted) {
@@ -99,8 +102,10 @@ update(keys, blocks) {
             this.y + this.size + this.verticalVelocity >= belowBlockTop
         ) {
             if (['grey', 'lime', 'black'].includes(block.color)) {
+                const previousColor = colorOfCurrentBlock;
                 colorOfCurrentBlock = block.color;
-                if (block.color === 'grey') {
+                
+                if (block.color === 'grey' && previousColor !== 'grey') {
                     this.speed = 8;
                     blockChanged = true;
                 }
@@ -121,13 +126,15 @@ update(keys, blocks) {
         this.isGrounded = false;
         if (blockChanged) {
             blockChanged = false;
-            setTimeout(() => {
-                if (colorOfCurrentBlock === 'grey') this.speed = 5;
-                if (colorOfCurrentBlock === 'lime') {
+            const currentBlockColor = colorOfCurrentBlock; // Capture current value
+            const timeoutId = setTimeout(() => {
+                if (currentBlockColor === 'grey') this.speed = 5;
+                if (currentBlockColor === 'lime') {
                     this.verticalVelocity = 5;
                     this.isGrounded = true;
                 }
-            }, colorOfCurrentBlock === 'grey' ? 2000 : 20);
+            }, currentBlockColor === 'grey' ? 2000 : 20);
+            this.activeTimeouts.push(timeoutId);
         }
     }
     
@@ -139,13 +146,18 @@ update(keys, blocks) {
 }
 
   resetPlayer() {
+    // Clear all active timeouts
+    this.activeTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+    this.activeTimeouts = [];
+    
     this.x = 0;
-    this.y = canvas.height / 2 - player.size / 2;
-    this.verticalVelocity = 0; // Reset vertical velocity
-    this.horizontalVelocity = 0; // Reset horizontal velocity
-    this.isGrounded = false; // Not grounded
-    colorOfCurrentBlock = 'none'; // Reset block color
-    console.log("Player reset to (0, 0)"); // Debugging output
+    this.y = canvas.height / 2 - this.size / 2; // Fixed: was player.size
+    this.verticalVelocity = 0;
+    this.horizontalVelocity = 0;
+    this.isGrounded = false;
+    this.speed = 5; // Reset speed
+    colorOfCurrentBlock = 'none';
+    console.log("Player reset to (0, 0)");
   }
 }
 
@@ -200,7 +212,7 @@ class Shadow {
 
   followPlayer(px, blocks) {
     this.x = px + (15 - this.padding); // Always match player's X position
-    let groundY = 300; // Track the lowest possible ground
+    let groundY = canvas.height; // Fixed: was 300, should start at canvas.height
 
     blocks.forEach((block) => {
       if (block.solid) {
@@ -218,7 +230,7 @@ class Shadow {
     });
 
     // Place shadow on the detected ground level
-    if (groundY !== Infinity) {
+    if (groundY !== canvas.height) { // Fixed: was checking against Infinity
       this.y = groundY - this.size;
     }
   }
@@ -252,7 +264,7 @@ const blockImages = [];
 // Camera properties
 let cameraX = 0; // X position of the camera
 const mapWidth = 2000; // Width of the map
-const cameraSpeed = 4; // Adjust this value to change camera speed
+// Removed unused cameraSpeed variable
 
 function drawOtherBlocks() {
   otherBlocks.forEach(block => {
@@ -336,6 +348,15 @@ function goToNextLevel() {
   // Reset player position for the next level
   player.x = 0;
   player.y = canvas.height / 2 - player.size / 2;
+  player.verticalVelocity = 0;
+  player.horizontalVelocity = 0;
+  player.isGrounded = false;
+  player.speed = 5; // Reset speed
+  colorOfCurrentBlock = null; // Reset block color
+  
+  // Clear any active timeouts
+  player.activeTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+  player.activeTimeouts = [];
 
   console.log(`Now at level ${currentLevel}`);
 }
@@ -357,7 +378,7 @@ function loadBlocksForCurrentLevel() {
 }
 
 let lastUpdateTime = 0; // Time of the last update
-const updateInterval = 15; // Update every 10 milliseconds
+const updateInterval = 15; // Update every 15 milliseconds
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -433,15 +454,22 @@ function update() {
     if (playerStarted == true) {
       levelTime = parseFloat((Date.now() - levelStartTime) / 1000); // Calculate the elapsed time in seconds
     }
-    // Check for collision with flags
+    
+    // Check for collision with flags (with cooldown to prevent multiple transitions)
     flags.forEach(flag => {
-      if (flag.checkCollision(player)) {
+      if (flag.checkCollision(player) && !levelTransitioning) {
+        levelTransitioning = true; // Prevent multiple transitions
         playerStarted = false
         document.getElementById("compleated-level").innerText = currentLevel;
         document.getElementById("time-stamp").innerText = levelTime;
         goToNextLevel(); // Call the level transition function
         levelTime = 0;
         levelStartTime = Date.now(); // Reset the level start time
+        
+        // Reset transition flag after delay
+        setTimeout(() => {
+          levelTransitioning = false;
+        }, 1000);
       }
     });
 
