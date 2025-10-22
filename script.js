@@ -213,6 +213,8 @@ class Shadow {
   followPlayer(px, blocks) {
     this.x = px + (15 - this.padding); // Always match player's X position
     let groundY = canvas.height; // Start at canvas bottom
+    // Always place shadow on the detected ground level (or canvas bottom if no block found)
+    this.y = groundY - this.size;
 
     blocks.forEach((block) => {
       if (block.solid) {
@@ -229,9 +231,7 @@ class Shadow {
       }
     });
 
-    // Always place shadow on the detected ground level (or canvas bottom if no block found)
-    this.y = groundY - this.size;
-}
+  }
 }
 
 
