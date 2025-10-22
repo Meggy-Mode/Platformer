@@ -227,7 +227,7 @@ class Shadow {
 
 
 let keys = {};
-const player = new Player("P1", 15, 'blue',);
+const player = new Player("P1", 15, 'blue', 0);
 const shadow = new Shadow("P1 Shadow", 1, 'grey', 1)
 const shadow2 = new Shadow("P1 Shadow", 1, 'grey', 2)
 const shadow3 = new Shadow("P1 Shadow", 1, 'grey', 3)
@@ -436,7 +436,7 @@ function update() {
     // Check for collision with flags
     flags.forEach(flag => {
       if (flag.checkCollision(player)) {
-        playerStarted == false
+        playerStarted = false
         document.getElementById("compleated-level").innerText = currentLevel;
         document.getElementById("time-stamp").innerText = levelTime;
         goToNextLevel(); // Call the level transition function
