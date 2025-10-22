@@ -142,7 +142,7 @@ update(keys, blocks) {
                     this.speed = 8;
                     blockChanged = true;
                 }
-                if (block.color === 'black') {
+                if (block.color === 'black' || previousColor === 'black') {
                     this.resetPlayer();
                     return;
                 }
