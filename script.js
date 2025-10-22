@@ -120,9 +120,9 @@ update(keys, blocks) {
                 this.isGrounded = true;
             }
             
-            /*this.x = this.horizontalVelocity > 0 
-                ? block.position.x - this.size 
-                : block.position.x + block.width;*/
+            this.x = this.horizontalVelocity > 0 
+                //? block.position.x - this.size 
+                //: block.position.x + block.width;
         }
         
         // Floor collision check (landing on top of blocks)
