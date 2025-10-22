@@ -120,9 +120,9 @@ update(keys, blocks) {
                 this.isGrounded = true;
             }
             
-            this.x = this.horizontalVelocity > 0 
+            /*this.x = this.horizontalVelocity > 0 
                 ? block.position.x - this.size 
-                : block.position.x + block.width;
+                : block.position.x + block.width;*/
         }
         
         // Floor collision check (landing on top of blocks)
@@ -172,7 +172,7 @@ update(keys, blocks) {
     }
     
     if (!collisionDetected) {
-        this.x = intendedX;
+        //this.x = intendedX;
     }
     
     //this.x = Math.max(0, Math.min(this.x, mapWidth - this.size));
