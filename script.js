@@ -137,7 +137,7 @@ update(keys, blocks) {
                 
                 const previousColor = colorOfCurrentBlock;
                 colorOfCurrentBlock = block.color;
-                if (block.color === 'black' || previousColor === 'black') {
+                if (block.color === 'black') {
                     this.resetPlayer();
                     return;
                 }
