@@ -175,7 +175,7 @@ update(keys, blocks) {
         this.x = intendedX;
     }
     
-    //this.x = Math.max(0, Math.min(this.x, mapWidth - this.size));
+    this.x = Math.max(0, Math.min(this.x, mapWidth - this.size));
 }
 
   resetPlayer() {
