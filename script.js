@@ -212,7 +212,7 @@ class Shadow {
 
   followPlayer(px, blocks) {
     this.x = px + (15 - this.padding); // Always match player's X position
-    let groundY = canvas.height; // Fixed: was 300, should start at canvas.height
+    let groundY = 300; // Fixed: was 300, should start at canvas.height
 
     blocks.forEach((block) => {
       if (block.solid) {
