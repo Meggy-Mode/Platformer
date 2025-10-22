@@ -75,7 +75,7 @@ update(keys, blocks) {
             this.verticalVelocity < 0 // Moving upward
         ) {
             // Hit ceiling
-            //this.y = blockBottom;
+            this.y = blockBottom;
             this.verticalVelocity = 0;
             
             if (block.color === 'black') {
@@ -87,7 +87,7 @@ update(keys, blocks) {
     
     // Check for floor collisions
     if (this.y + this.size >= canvas.height) {
-        //this.y = canvas.height - this.size;
+        this.y = canvas.height - this.size;
         this.verticalVelocity = 0;
         this.isGrounded = true;
     }
@@ -148,7 +148,7 @@ update(keys, blocks) {
 
             }
             
-            //this.y = belowBlockTop - this.size;
+            this.y = belowBlockTop - this.size;
             this.verticalVelocity = 0;
             this.isGrounded = true;
             onBlock = true;
