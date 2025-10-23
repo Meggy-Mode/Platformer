@@ -154,8 +154,8 @@ update(keys, blocks) {
         if (
             intendedX < block.position.x + block.width &&
             intendedX + this.size > block.position.x &&
-            this.y + 2 < blockBottom && // Added small margin to prevent false positives
-            this.y + this.size - 2 > blockTop // Added small margin to prevent false positives
+            this.y < aboveBlockBottom &&
+            this.y + this.size > belowBlockTop
         ) {
             collisionDetected = true;
             
