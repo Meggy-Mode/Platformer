@@ -59,9 +59,11 @@ update(keys, blocks) {
     // Apply vertical movement first and check for ceiling/floor collisions
     this.y += this.verticalVelocity;
     
+    let shouldReset = false;
+    
     // Check for ceiling collisions (hitting bottom of blocks)
     blocks.forEach(block => {
-        if (!block.solid) return;
+        if (!block.solid || shouldReset) return;
         
         const blockBottom = block.position.y + block.height;
         const blockTop = block.position.y;
@@ -79,39 +81,86 @@ update(keys, blocks) {
             this.verticalVelocity = 0;
             
             if (block.color === 'black') {
-                this.resetPlayer();
+                shouldReset = true;
                 return;
             }
         }
     });
     
-    // Check for floor collisions
+    if (shouldReset) {
+        this.resetPlayer();
+        return;
+    }
+    
+    // Check for floor collisions with canvas
     if (this.y + this.size >= canvas.height) {
         this.y = canvas.height - this.size;
         this.verticalVelocity = 0;
         this.isGrounded = true;
     }
 
+    // Check for floor collisions with blocks FIRST (before horizontal movement)
+    let onBlock = false;
+    blocks.forEach(block => {
+        if (!block.solid || shouldReset) return;
+        
+        const blockTop = block.position.y;
+        const blockBottom = block.position.y + block.height;
+
+        // Floor collision check (landing on top of blocks)
+        if (
+            this.x < block.position.x + block.width &&
+            this.x + this.size > block.position.x &&
+            this.y + this.size <= blockTop + Math.abs(this.verticalVelocity) + 1 &&
+            this.y + this.size >= blockTop &&
+            this.verticalVelocity >= 0 // Moving downward
+        ) {
+            if (['grey', 'lime', 'black'].includes(block.color)) {
+                const previousColor = colorOfCurrentBlock;
+                colorOfCurrentBlock = block.color;
+                if (block.color === 'black') {
+                    shouldReset = true;
+                    return;
+                }
+                if (block.color === 'grey' && previousColor !== 'grey') {
+                    this.speed = 8;
+                    blockChanged = true;
+                }
+            }
+            
+            this.y = blockTop - this.size;
+            this.verticalVelocity = 0;
+            this.isGrounded = true;
+            onBlock = true;
+        }
+    });
+
+    if (shouldReset) {
+        this.resetPlayer();
+        return;
+    }
+
+    // Now handle horizontal movement
     let intendedX = this.x + this.horizontalVelocity;
-    let collisionDetected = false, onBlock = false;
+    let collisionDetected = false;
 
     blocks.forEach(block => {
-        if (!block.solid) return;
+        if (!block.solid || shouldReset) return;
         
-        const belowBlockTop = block.position.y;
-        const aboveBlockBottom = block.position.y + block.height;
+        const blockTop = block.position.y;
+        const blockBottom = block.position.y + block.height;
 
-        // Horizontal collision check (walls)
+        // Horizontal collision check (walls) - with better vertical overlap check
         if (
             intendedX < block.position.x + block.width &&
             intendedX + this.size > block.position.x &&
-            this.y < aboveBlockBottom &&
-            this.y + this.size > belowBlockTop
+            this.y + 2 < blockBottom && // Added small margin to prevent false positives
+            this.y + this.size - 2 > blockTop // Added small margin to prevent false positives
         ) {
             collisionDetected = true;
             
             if (block.color === 'black') {
-                this.resetPlayer();
+                shouldReset = true;
                 return;
             }
             
@@ -120,39 +169,20 @@ update(keys, blocks) {
                 this.isGrounded = true;
             }
             
-            this.x = this.horizontalVelocity > 0 
-                ? block.position.x - this.size 
-                : block.position.x + block.width;
-        }
-        
-        // Floor collision check (landing on top of blocks)
-        if (
-            this.x < block.position.x + block.width &&
-            this.x + this.size > block.position.x &&
-            this.y + this.size <= belowBlockTop + Math.abs(this.verticalVelocity) + 1 &&
-            this.y + this.size >= belowBlockTop 
-        ) {
-            if (['grey', 'lime', 'black'].includes(block.color)) {
-                
-                const previousColor = colorOfCurrentBlock;
-                colorOfCurrentBlock = block.color;
-                if (block.color === 'black') {
-                    this.resetPlayer();
-                    return;
-                }
-                if (block.color === 'grey' && previousColor !== 'grey') {
-                    this.speed = 8;
-                    blockChanged = true;
-                }
-
+            // Push player to the side of the block
+            if (this.horizontalVelocity > 0) {
+                this.x = block.position.x - this.size;
+            } else {
+                this.x = block.position.x + block.width;
             }
-            
-            this.y = belowBlockTop - this.size;
-            this.verticalVelocity = 0;
-            this.isGrounded = true;
-            onBlock = true;
+            intendedX = this.x; // Update intended position
         }
     });
+
+    if (shouldReset) {
+        this.resetPlayer();
+        return;
+    }
 
     if (!collisionDetected && !onBlock) {
         this.isGrounded = false;
