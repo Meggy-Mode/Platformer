@@ -65,8 +65,8 @@ update(keys, blocks) {
     blocks.forEach(block => {
         if (!block.solid || shouldReset) return;
         
-        const blockBottom = block.position.y + block.height;
-        const blockTop = block.position.y;
+        const belowBlockTop = block.position.y;
+        const aboveBlockBottom = block.position.y + block.height;
         
         // Check if player is hitting the ceiling (bottom of a block)
         if (
