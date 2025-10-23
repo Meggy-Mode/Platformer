@@ -147,8 +147,8 @@ update(keys, blocks) {
     blocks.forEach(block => {
         if (!block.solid || shouldReset) return;
         
-        const blockTop = block.position.y;
-        const blockBottom = block.position.y + block.height;
+        const belowBlockTop = block.position.y;
+        const aboveBlockBottom = block.position.y + block.height;
 
         // Horizontal collision check (walls) - with better vertical overlap check
         if (
